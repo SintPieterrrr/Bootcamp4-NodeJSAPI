@@ -12,32 +12,33 @@ const client = new MongoClient(uri, {
 });
 
 client.connect().then(() => {
-    const auto_db = client.db("api");
-    console.log(auto_db);
-})
+    const hostname = '127.0.0.1';
+    const port = 3000;
 
+    const server = http.createServer((req, res) => {
+        console.log(req.method, req.url)
 
-const hostname = '127.0.0.1';
-const port = 3000;
+        switch (req.method) {
+            case "GET":
+                const auto_db = client.db("api");
+                const autos = auto_db.collection("autos");
+                autos.findOne().then((result) => {
+                    // Response from out server
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(result));
+                });
+                //console.log(autos);
+                break;
+            default:
+                res.statusCode = 405;
+                res.setHeader('Content-Type', 'application/json');
+                res.end('{melding:"' + req.method +' not allowed"}');
+        }
+        // console.log(req)
+    });
 
-const server = http.createServer((req, res) => {
-    console.log(req.method, req.url)
-
-    switch (req.method) {
-        case "GET":
-            // Response from out server
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.end('{melding:"GET request succesful"}');
-            break;
-        default:
-            res.statusCode = 405;
-            res.setHeader('Content-Type', 'application/json');
-            res.end('{melding:"' + req.method +' not allowed"}');
-    }
-    // console.log(req)
-});
-
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+    server.listen(port, hostname, () => {
+        console.log(`Server running at http://${hostname}:${port}/`);
+    });
 });
